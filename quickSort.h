@@ -20,10 +20,12 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-#ifndef A_QSORT_INCLUDED
-#define A_QSORT_INCLUDED
+
 #include <algorithm>
 #include "parallel.h"
+
+#ifndef A_QSORT_INCLUDED
+#define A_QSORT_INCLUDED
 
 template <class E, class BinPred, class intT>
 void insertionSort(E* A, intT n, BinPred f) {
@@ -39,8 +41,8 @@ void insertionSort(E* A, intT n, BinPred f) {
 
 template <class E, class BinPred>
 E median(E a, E b, E c, BinPred f) {
-  return  f(a,b) ? (f(b,c) ? b : (f(a,c) ? c : a)) 
-           : (f(a,c) ? a : (f(b,c) ? c : b));
+  return  f(a,b) ? (f(b,c) ? b : (f(a,c) ? c : a))
+  : (f(a,c) ? a : (f(b,c) ? c : b));
 }
 
 // Quicksort based on median of three elements as pivot
@@ -56,19 +58,21 @@ void quickSort(E* A, intT n, BinPred f) {
     E* R = A+n-1; // above R are greater than pivot
     while (1) {
       while (!f(p,*M)) {
-	if (f(*M,p)) std::swap(*M,*(L++));
-	if (M >= R) break; 
-	M++;
+        if (f(*M,p)) std::swap(*M,*(L++));
+        if (M >= R) break;
+        M++;
       }
       while (f(p,*R)) R--;
-      if (M >= R) break; 
-      std::swap(*M,*R--); 
+      if (M >= R) break;
+      std::swap(*M,*R--);
       if (f(*M,p)) std::swap(*M,*(L++));
       M++;
     }
-    cilk_spawn quickSort(A, L-A, f);
-    quickSort(M, A+n-M, f); // Exclude all elts that equal pivot
-    cilk_sync;
+    par::fork2([&] {
+      quickSort(A, L-A, f);
+    }, [&] {
+      quickSort(M, A+n-M, f); // Exclude all elts that equal pivot
+    });
   }
 }
 

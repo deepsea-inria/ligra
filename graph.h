@@ -2,6 +2,10 @@
 #include <fstream>
 #include <stdlib.h>
 #include "parallel.h"
+
+#ifndef _LIGRA_GRAPH_H_
+#define _LIGRA_GRAPH_H_
+
 using namespace std;
 
 // **************************************************************
@@ -12,7 +16,7 @@ struct symmetricVertex {
   intE* neighbors;
   intT degree;
   void del() {free(neighbors); }
-symmetricVertex(intE* n, intT d) : neighbors(n), degree(d) {}
+  symmetricVertex(intE* n, intT d) : neighbors(n), degree(d) {}
 #ifndef WEIGHTED
   uintE getInNeighbor(intT j) { return neighbors[j]; }
   uintE getOutNeighbor(intT j) { return neighbors[j]; }
@@ -39,11 +43,11 @@ struct asymmetricVertex {
   intT outDegree;
   intT inDegree;
   void del() {free(inNeighbors); free(outNeighbors);}
-asymmetricVertex(intE* iN, intE* oN, intT id, intT od) : inNeighbors(iN), outNeighbors(oN), inDegree(id), outDegree(od) {}
+  asymmetricVertex(intE* iN, intE* oN, intT id, intT od) : inNeighbors(iN), outNeighbors(oN), inDegree(id), outDegree(od) {}
 #ifndef WEIGHTED
   uintE getInNeighbor(intT j) { return inNeighbors[j]; }
   uintE getOutNeighbor(intT j) { return outNeighbors[j]; }
-#else 
+#else
   intE getInNeighbor(intT j) { return inNeighbors[2*j]; }
   intE getOutNeighbor(intT j) { return outNeighbors[2*j]; }
   intE getInWeight(intT j) { return inNeighbors[2*j+1]; }
@@ -60,6 +64,7 @@ asymmetricVertex(intE* iN, intE* oN, intT id, intT od) : inNeighbors(iN), outNei
 
 template <class vertex>
 struct graph {
+  using vertex_type = vertex;
   vertex *V;
   long n;
   long m;
@@ -67,13 +72,15 @@ struct graph {
   intE* inEdges;
   intT* flags;
   bool transposed;
-  graph(vertex* VV, long nn, long mm) 
+  graph()
+  : V(nullptr), n(0), m(0), allocatedInplace(nullptr), inEdges(nullptr), flags(NULL), transposed(false) { }
+  graph(vertex* VV, long nn, long mm)
   : V(VV), n(nn), m(mm), allocatedInplace(NULL), flags(NULL), transposed(false) {}
-graph(vertex* VV, long nn, long mm, intE* ai, intE* _inEdges = NULL) 
-: V(VV), n(nn), m(mm), allocatedInplace(ai), inEdges(_inEdges), flags(NULL), transposed(false) {}
+  graph(vertex* VV, long nn, long mm, intE* ai, intE* _inEdges = NULL)
+  : V(VV), n(nn), m(mm), allocatedInplace(ai), inEdges(_inEdges), flags(NULL), transposed(false) {}
   void del() {
     if (flags != NULL) free(flags);
-    if (allocatedInplace == NULL) 
+    if (allocatedInplace == NULL)
       for (intT i=0; i < n; i++) V[i].del();
     else free(allocatedInplace);
     free(V);
@@ -81,10 +88,12 @@ graph(vertex* VV, long nn, long mm, intE* ai, intE* _inEdges = NULL)
   }
   void transpose() {
     if(sizeof(vertex) == sizeof(asymmetricVertex)) {
-      parallel_for(intT i=0;i<n;i++) {
-	V[i].flipEdges();
-      }
+      par::parallel_for(0l, n, [&] (long i) {
+        V[i].flipEdges();
+      });
       transposed = !transposed;
     } 
   }
 };
+
+#endif

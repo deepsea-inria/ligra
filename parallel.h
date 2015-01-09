@@ -22,6 +22,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+/*
 #if defined(CILK)
 #include <cilk/cilk.h>
 #define parallel_main main
@@ -58,8 +59,14 @@
 #define cilk_for for
 
 #endif
+ */
+
+#include "benchmark.hpp"
 
 #include <limits.h>
+
+#ifndef _LIGRA_PARALLEL_H_
+#define _LIGRA_PARALLEL_H_
 
 #if defined(LONG)
 typedef long intT;
@@ -72,6 +79,8 @@ typedef unsigned int uintT;
 #define INT_T_MAX INT_MAX
 #define UINT_T_MAX UINT_MAX
 #endif
+
+#define EDGELONG 1
 
 //edges store 32-bit quantities unless EDGELONG is defined
 #if defined(EDGELONG)
@@ -86,3 +95,8 @@ typedef unsigned int uintE;
 #define UINT_E_MAX UINT_MAX
 #endif
 
+using ulong = unsigned long;
+
+namespace par = pasl::sched::native;
+
+#endif
