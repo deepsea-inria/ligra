@@ -59,7 +59,7 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
   intE* ai = newA(intE, mm);
   intE* in_degrees = newA(intE, nn);
   for (intE i = 0; i < nn; i++)
-    in_degrees = 0;
+    in_degrees[i] = 0;
   for (intE i = 0; i < nb_vertices; i++) {
     intE n = adj.adjlists[i].get_out_degree();
     intE* neighbors = adj.adjlists[i].get_out_neighbors();
@@ -119,11 +119,6 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
   free(incounts);
 }
   
-template <class Adjlist, class Ligra_graph>
-void search_benchmark_select_input_graph() {
-
-}
-  
 }
 }
 
@@ -139,8 +134,6 @@ int main(int argc, char** argv) {
   using adjlist_type = pasl::graph::adjlist<adjlist_seq_type>;
   
   using ligra_type = graph<asymmetricVertex>;
-  
-  pasl::graph::search_benchmark_select_input_graph<adjlist_type, ligra_type>();
   
   using vtxid_type = typename adjlist_type::vtxid_type;
   adjlist_type graph;
