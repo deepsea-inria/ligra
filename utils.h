@@ -82,7 +82,7 @@ namespace sequence {
   
 #define nblocks(_n,_bsize) (1 + ((_n)-1)/(_bsize))
   
-#define blocked_for(_i, _s, _e, _bsize, _body)  {	\
+#define ligra_blocked_for(_i, _s, _e, _bsize, _body)  {	\
 intT _ss = _s;					\
 intT _ee = _e;					\
 intT _n = _ee-_ss;					\
@@ -106,7 +106,7 @@ _body						\
     intT l = nblocks(e-s, _SCAN_BSIZE);
     if (l <= 1) return reduceSerial<OT>(s, e, f , g);
     OT *Sums = newA(OT,l);
-    blocked_for (i, s, e, _SCAN_BSIZE,
+    ligra_blocked_for (i, s, e, _SCAN_BSIZE,
                  Sums[i] = reduceSerial<OT>(s, e, f, g););
     OT r = reduce<OT>((intT) 0, l, f, getA<OT,intT>(Sums));
     free(Sums);
@@ -163,10 +163,10 @@ _body						\
     intT l = nblocks(n,_SCAN_BSIZE);
     if (l <= 2) return scanSerial(Out, s, e, f, g, zero, inclusive, back);
     ET *Sums = newA(ET,nblocks(n,_SCAN_BSIZE));
-    blocked_for (i, s, e, _SCAN_BSIZE,
+    ligra_blocked_for (i, s, e, _SCAN_BSIZE,
                  Sums[i] = reduceSerial<ET>(s, e, f, g););
     ET total = scan(Sums, (intT) 0, l, f, getA<ET,intT>(Sums), zero, false, back);
-    blocked_for (i, s, e, _SCAN_BSIZE,
+    ligra_blocked_for (i, s, e, _SCAN_BSIZE,
                  scanSerial(Out, s, e, f, g, Sums[i], inclusive, back););
     free(Sums);
     return total;
@@ -230,10 +230,10 @@ _body						\
     intT l = nblocks(e-s, _F_BSIZE);
     if (l <= 1) return packSerial(Out, Fl, s, e, f);
     intT *Sums = newA(intT,l);
-    blocked_for (i, s, e, _F_BSIZE, Sums[i] = sumFlagsSerial(Fl+s, e-s););
+    ligra_blocked_for (i, s, e, _F_BSIZE, Sums[i] = sumFlagsSerial(Fl+s, e-s););
     intT m = plusScan(Sums, Sums, l);
     if (Out == NULL) Out = newA(ET,m);
-    blocked_for(i, s, e, _F_BSIZE, packSerial(Out+Sums[i], Fl, s, e, f););
+    ligra_blocked_for(i, s, e, _F_BSIZE, packSerial(Out+Sums[i], Fl, s, e, f););
     free(Sums);
     return _seq<ET>(Out,m);
   }

@@ -5,6 +5,8 @@
 #include "ligra.h"
 #include "graphfileshared.hpp"
 
+intT nb_visited;
+
 struct BFS_F {
   intT* Parents;
   BFS_F(intT* _Parents) : Parents(_Parents) {}
@@ -38,6 +40,10 @@ void Compute(graph<vertex>& GA, intT start) {
   }
   Frontier.del();
   free(Parents);
+  nb_visited = 0;
+  for (intT i = 0; i < GA.n; i++)
+    if (Parents[i] >= 0)
+      nb_visited++;
 }
 
 /*---------------------------------------------------------------------*/
@@ -56,7 +62,7 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
   intT mm = nb_edges;
   using vertex_type = typename Ligra_graph::vertex_type;
   vertex_type* VV = newA(vertex_type, nn);
-  intE* ai = newA(intE, mm);
+  intE* ai = newA(intE, 2 * mm);
   intE* in_degrees = newA(intE, nn);
   for (intE i = 0; i < nn; i++)
     in_degrees[i] = 0;
@@ -80,7 +86,6 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
     offsets[i] = acc;
     acc = newacc;
   }
-  lig = Ligra_graph(VV, nn, mm, ai);
   intE** outps = newA(intE*, nn);
   intE** inps = newA(intE*, nn);
   for (intE i = 0; i < nn; i++) {
@@ -112,6 +117,7 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
       inp[c] = i;
     }
   }
+  lig = Ligra_graph(VV, nn, mm, ai);
   free(in_degrees);
   free(offsets);
   free(outps);
@@ -152,6 +158,7 @@ int main(int argc, char** argv) {
     Compute(lig, source);
   };
   auto output = [&] {
+    std::cout << "nb_visited\t" << nb_visited << std::endl;
     //report(graph);
     print_adjlist_summary(graph);
   };

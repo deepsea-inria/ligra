@@ -68,7 +68,7 @@
 #ifndef _LIGRA_PARALLEL_H_
 #define _LIGRA_PARALLEL_H_
 
-#if defined(LONG)
+#if defined(LIGRALONG)
 typedef long intT;
 typedef unsigned long uintT;
 #define INT_T_MAX LONG_MAX
@@ -80,10 +80,8 @@ typedef unsigned int uintT;
 #define UINT_T_MAX UINT_MAX
 #endif
 
-#define EDGELONG 1
-
-//edges store 32-bit quantities unless EDGELONG is defined
-#if defined(EDGELONG)
+//edges store 32-bit quantities unless LIGRAEDGELONG is defined
+#if defined(LIGRAEDGELONG)
 typedef long intE;
 typedef unsigned long uintE;
 #define INT_E_MAX LONG_MAX
