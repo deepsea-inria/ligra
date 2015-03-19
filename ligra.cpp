@@ -22,7 +22,7 @@ struct BFS_F {
 };
 
 template <class vertex>
-void Compute(graph<vertex>& GA, intT start) {
+intT* ComputeBFS(graph<vertex>& GA, intT start) {
   intT n = GA.n;
   //creates Parents array, initialized to all -1, except for start
   intT* Parents = newA(intT,GA.n);
@@ -39,11 +39,7 @@ void Compute(graph<vertex>& GA, intT start) {
     Frontier = output; //set new frontier
   }
   Frontier.del();
-  free(Parents);
-  nb_visited = 0;
-  for (intT i = 0; i < GA.n; i++)
-    if (Parents[i] >= 0)
-      nb_visited++;
+  return Parents;
 }
 
 /*---------------------------------------------------------------------*/
@@ -124,6 +120,8 @@ void convert(const Adjlist& adj, Ligra_graph& lig) {
   free(inps);
   free(incounts);
 }
+
+
   
 }
 }
@@ -142,25 +140,31 @@ int main(int argc, char** argv) {
   using ligra_type = graph<asymmetricVertex>;
   
   using vtxid_type = typename adjlist_type::vtxid_type;
-  adjlist_type graph;
   ligra_type lig;
   intT source;
+  intT* Parents;
   auto init = [&] {
+    pasl::graph::should_disable_random_permutation_of_vertices = pasl::util::cmdline::parse_or_default_bool("should_disable_random_permutation_of_vertices", false, false);
+    adjlist_type graph;
     source = (intT) pasl::util::cmdline::parse_or_default_long("source", 0);
     pasl::util::cmdline::argmap_dispatch tmg;
     tmg.add("from_file",          [&] { load_graph_from_file(graph); });
     tmg.add("by_generator",       [&] { generate_graph(graph); });
     pasl::util::cmdline::dispatch_by_argmap(tmg, "load");
     convert(graph, lig);
+    print_adjlist_summary(graph);
     mlockall(0);
   };
   auto run = [&] (bool sequential) {
-    Compute(lig, source);
+    Parents = ComputeBFS(lig, source);
   };
   auto output = [&] {
+    nb_visited = 0;
+    for (intT i = 0; i < lig.n; i++)
+      if (Parents[i] >= 0)
+        nb_visited++;
+    free(Parents);
     std::cout << "nb_visited\t" << nb_visited << std::endl;
-    //report(graph);
-    print_adjlist_summary(graph);
   };
   auto destroy = [&] {
     

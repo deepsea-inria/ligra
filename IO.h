@@ -240,6 +240,14 @@ graph<vertex> readGraphFromFile(char* fname, bool isSymmetric) {
         return graph<vertex>(v,n,m,edges);
       }
     }
+
+    void writeGraphToBinary(std::string iFile) {
+      std::string config = iFile + ".config";
+      std::string adj = iFile + ".adj";
+      std::string idx = iFile + ".idx";
+      //todo
+      assert(false);
+    }
     
     template <class vertex>
     graph<vertex> readGraphFromBinary(char* iFile, bool isSymmetric) {
