@@ -42,6 +42,68 @@ intT* ComputeBFS(graph<vertex>& GA, intT start) {
   return Parents;
 }
 
+// **************************************************************
+//    Non-DETERMINISTIC BREADTH FIRST SEARCH
+// **************************************************************
+
+// **************************************************************
+//    THE NON-DETERMINISTIC BSF
+//    Updates the graph so that it is the BFS tree (i.e. the neighbors
+//      in the new graph are the children in the bfs tree)
+// **************************************************************
+
+template <class vertex>
+intT* BFS_orig(graph<vertex> GA, intT start) {
+  intT numVertices = GA.n;
+  intT numEdges = GA.m;
+  vertex *G = GA.V;
+  intT* Frontier = newA(intT,numEdges);
+  intT* Visited = newA(intT,numVertices);
+  intT* FrontierNext = newA(intT,numEdges);
+  intT* Counts = newA(intT,numVertices);
+  par::parallel_for ((intT)0, (intT)numVertices, [&] (long i) {
+          Visited[i] = 0;});
+
+  Frontier[0] = start;
+  intT frontierSize = 1;
+  Visited[start] = 1;
+
+  intT totalVisited = 0;
+  int round = 0;
+
+  while (frontierSize > 0) {
+    round++;
+    totalVisited += frontierSize;
+
+    par::parallel_for ((intT)0, (intT)frontierSize, [&] (long i) {
+        Counts[i] = G[Frontier[i]].getOutDegree();});
+    intT nr = sequence::scan(Counts,Counts,frontierSize,addF<intT>(),(intT)0);
+
+    // For each vertexB in the frontier try to "hook" unvisited neighbors.
+    par::parallel_for ((intT)0, (intT)frontierSize, [&] (long i) {
+      intT k= 0;
+      intT v = Frontier[i];
+      intT o = Counts[i];
+      for (intT j=0; j < G[v].getOutDegree(); j++) {
+        intT ngh = G[v].getOutNeighbor(j); //Neighbors[j];
+	if (Visited[ngh] == 0 && CAS(&Visited[ngh],(intT)0,(intT)1)) {
+	  FrontierNext[o+j] = ngh;
+          k++;
+	}
+	else FrontierNext[o+j] = -1;
+      }
+      //      G[v].degree = k;
+      });
+
+    // Filter out the empty slots (marked with -1)
+    frontierSize = sequence::filter(FrontierNext,Frontier,nr,nonNegF());
+  }
+  free(FrontierNext); free(Frontier); free(Counts); //free(Visited);
+  //  return pair<intT,intT>(totalVisited,round);
+  return Visited;
+}
+
+
 /*---------------------------------------------------------------------*/
 
 namespace pasl {
@@ -143,6 +205,7 @@ int main(int argc, char** argv) {
   ligra_type lig;
   intT source;
   intT* Parents;
+  bool use_pbbs = false;
   auto init = [&] {
     pasl::graph::should_disable_random_permutation_of_vertices = pasl::util::cmdline::parse_or_default_bool("should_disable_random_permutation_of_vertices", false, false);
     adjlist_type graph;
@@ -154,9 +217,18 @@ int main(int argc, char** argv) {
     convert(graph, lig);
     print_adjlist_summary(graph);
     mlockall(0);
+    std::string algo = pasl::util::cmdline::parse_or_default_string("algo", "ligra");
+    use_pbbs = algo != "ligra";
+    if (! (algo == "ligra" || algo == "pbbs_pbfs_cilk")) {
+      pasl::util::atomic::die("bogus -algo");
+    }
   };
   auto run = [&] (bool sequential) {
-    Parents = ComputeBFS(lig, source);
+    if (use_pbbs) {
+      Parents = BFS_orig(lig, source);
+    } else { 
+      Parents = ComputeBFS(lig, source);
+    }
   };
   auto output = [&] {
     nb_visited = 0;
