@@ -3,8 +3,8 @@
 # Configuration
 
 # Paths to auxiliary Makefile definitions
-
-TOOLS_BUILD_FOLDER=../pasl/tools/build
+PASL=../sc15-graph/
+TOOLS_BUILD_FOLDER=$(PASL)/tools/build
 
 
 ####################################################################
@@ -86,7 +86,7 @@ ligra.cilk: ligra.cilk_32 ligra.cilk_64
 ####################################################################
 # Folders
 
-INCLUDES=. ../pasl/graph/include/ ../pasl/graph/bench/ $(SEQUTIL_PATH) $(PARUTIL_PATH) $(SCHED_PATH) $(CHUNKEDSEQ_PATH) $(QUICKCHECK_PATH) $(MATRIX_MARKET_PATH) $(PBBS_PATH) $(MALLOC_COUNT_PATH)
+INCLUDES=. $(PASL)/graph/include/ $(PASL)/graph/bench/ $(SEQUTIL_PATH) $(PARUTIL_PATH) $(SCHED_PATH) $(CHUNKEDSEQ_PATH) $(QUICKCHECK_PATH) $(MATRIX_MARKET_PATH) $(PBBS_PATH) $(MALLOC_COUNT_PATH)
 
 
 FOLDERS=$(INCLUDES)

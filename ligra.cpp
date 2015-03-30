@@ -3,9 +3,75 @@
 
 
 #include "ligra.h"
-#include "graphfileshared.hpp"
+//#include "graphfileshared.hpp"
+
+#include <fstream>
+#include <iostream>
+#include <istream>
+#include <ostream>
+#include <sstream>
+
 
 intT nb_visited;
+
+#include "edgelist.hpp"
+#include "adjlist.hpp"
+
+namespace pasl{
+  namespace graph {
+
+    template <class Adjlist>
+void print_adjlist_summary(const Adjlist& graph) {
+  std::cout << "nb_vertices\t" << graph.get_nb_vertices() << std::endl;
+  std::cout << "nb_edges\t" << graph.nb_edges << std::endl;
+}
+
+    
+static constexpr uint64_t GRAPH_TYPE_ADJLIST = 0xdeadbeef;
+static constexpr uint64_t GRAPH_TYPE_EDGELIST = 0xba5eba11;
+
+static const int bits_per_byte = 8;
+static const int graph_file_header_sz = 5;
+
+template <class Vertex_id>
+void read_adjlist_from_file(std::string fname, adjlist<flat_adjlist_seq<Vertex_id>>& graph) {
+  using vtxid_type = Vertex_id;
+  std::ifstream in(fname, std::ifstream::binary);
+  uint64_t graph_type;
+  int nbbits;
+  vtxid_type nb_vertices;
+  edgeid_type nb_edges;
+  bool is_symmetric;
+  uint64_t header[5];
+  in.read((char*)header, sizeof(header));
+  graph_type = header[0];
+  nbbits = int(header[1]);
+  nb_vertices = vtxid_type(header[2]);
+  nb_edges = edgeid_type(header[3]);
+  is_symmetric = bool(header[4]);
+  if (graph_type != GRAPH_TYPE_ADJLIST)
+    util::atomic::die("read_adjlist_from_file"); //! \todo print the values expected and the value read
+  if (sizeof(vtxid_type) * 8 < nbbits)
+    util::atomic::die("read_adjlist_from_file: incompatible graph file");
+  edgeid_type contents_szb;
+  char* bytes;
+  in.seekg (0, in.end);
+  contents_szb = edgeid_type(in.tellg()) - sizeof(header);
+  in.seekg (sizeof(header), in.beg);
+  bytes = data::mynew_array<char>(contents_szb);
+  if (bytes == NULL)
+    util::atomic::die("failed to allocate space for graph");
+  in.read (bytes, contents_szb);
+  in.close();
+  vtxid_type nb_offsets = nb_vertices + 1;
+  if (contents_szb != sizeof(vtxid_type) * (nb_offsets + nb_edges))
+    util::atomic::die("bogus file");
+  graph.adjlists.init(bytes, nb_vertices, nb_edges);
+  graph.nb_edges = nb_edges;
+}
+
+  } } //end namespace
+
 
 struct BFS_F {
   intT* Parents;
@@ -210,10 +276,13 @@ int main(int argc, char** argv) {
     pasl::graph::should_disable_random_permutation_of_vertices = pasl::util::cmdline::parse_or_default_bool("should_disable_random_permutation_of_vertices", false, false);
     adjlist_type graph;
     source = (intT) pasl::util::cmdline::parse_or_default_long("source", 0);
+    std::string infile = pasl::util::cmdline::parse_or_default_string("infile", "");
+    read_adjlist_from_file(infile, graph);
+    /*
     pasl::util::cmdline::argmap_dispatch tmg;
     tmg.add("from_file",          [&] { load_graph_from_file(graph); });
-    tmg.add("by_generator",       [&] { generate_graph(graph); });
-    pasl::util::cmdline::dispatch_by_argmap(tmg, "load");
+    tmg.add("by_generator",       [&] { generate_graph(graph); }); 
+    pasl::util::cmdline::dispatch_by_argmap(tmg, "load"); */
     convert(graph, lig);
     print_adjlist_summary(graph);
     mlockall(0);
