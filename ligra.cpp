@@ -306,6 +306,9 @@ int main(int argc, char** argv) {
         nb_visited++;
     free(Parents);
     std::cout << "nb_visited\t" << nb_visited << std::endl;
+#ifdef COUNT_SHORTCUT
+    std::cout << "nb_times_shortcut\t" << nbTimesShortcut << std::endl;
+#endif    
   };
   auto destroy = [&] {
     

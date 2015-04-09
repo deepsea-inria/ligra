@@ -292,6 +292,12 @@ pair<uintT,intT*> edgeMapSparse(vertex* frontierVertices, intT* indices,
 
 static int edgesTraversed = 0;
 
+#define COUNT_SHORTCUT 0
+
+#ifdef COUNT_SHORTCUT
+static int nbTimesShortcut = 0;
+#endif
+
 // decides on sparse or dense base on number of nonzeros in the active vertices
 template <class F, class vertex>
 vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1,
@@ -319,6 +325,9 @@ vertexSubset edgeMap(graph<vertex> GA, vertexSubset &V, F f, intT threshold = -1
   edgesTraversed += outDegrees;
   if (outDegrees == 0) return vertexSubset(numVertices);
   if (m + outDegrees > threshold) {
+    #ifdef COUNT_SHORTCUT
+    nbTimesShortcut++;
+    #endif    
     V.toDense();
     free(degrees);
     free(frontierVertices);
