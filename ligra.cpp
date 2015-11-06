@@ -94,7 +94,8 @@ intT* ComputeBFS(graph<vertex>& GA, intT start) {
   intT* Parents = newA(intT,GA.n);
   par::parallel_for(0l, GA.n, [&] (long i) {
     Parents[i] = -1;
-  });
+    }); 
+  //  memset(Parents, -1, GA.n);
   Parents[start] = start;
   
   vertexSubset Frontier(n,start); //creates initial frontier
@@ -128,7 +129,8 @@ intT* BFS_orig(graph<vertex> GA, intT start) {
   intT* FrontierNext = newA(intT,numEdges);
   intT* Counts = newA(intT,numVertices);
   par::parallel_for ((intT)0, (intT)numVertices, [&] (long i) {
-          Visited[i] = 0;});
+  Visited[i] = 0;});
+  //  memset(Visited, 0, numVertices); 
 
   Frontier[0] = start;
   intT frontierSize = 1;
